@@ -1,0 +1,51 @@
+.wrap {
+  margin: 0.75rem 0;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.35rem 0.85rem;
+  background-color: #1a1d23;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.lang {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+.copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+  font-family: inherit;
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.12s, color 0.12s;
+}
+
+.copy:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+.copy:focus-visible {
+  outline: 2px solid var(--primary, #f97316);
+  outline-offset: 2px;
+}
