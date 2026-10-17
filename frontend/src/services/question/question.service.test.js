@@ -57,6 +57,7 @@ describe('questionService', () => {
       const result = await questionService.searchQuestionsSemantic('useState hook');
       expect(apiClient.get).toHaveBeenCalledWith('/api/questions/search', {
         params: { query: 'useState hook' },
+        timeout: 30000,
       });
       expect(result.data).toEqual(mockResults);
     });

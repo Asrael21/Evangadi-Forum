@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { questionService } from '../../services/question/question.service';
 import styles from './MyQuestions.module.css';
@@ -38,6 +39,8 @@ function getAvatarBg(name = '') {
   return AVATAR_PALETTE[Math.abs(hash) % AVATAR_PALETTE.length];
 }
 
+const INITIAL_VISIBLE_COUNT = 10;
+
 export default function MyQuestions() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -46,6 +49,7 @@ export default function MyQuestions() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_COUNT);
 
   useEffect(() => {
     let cancelled = false;
@@ -119,51 +123,86 @@ export default function MyQuestions() {
         )}
 
         {!isLoading && !error && questions.length > 0 && (
-          <ul className={styles.list}>
-            {questions.map(q => (
-              <li
-                key={q.questionHash || q.id}
-                className={styles.card}
-                onClick={() => navigate(`/questions/${q.questionHash}`)}
-                role='button'
-                tabIndex={0}
-                onKeyDown={e =>
-                  e.key === 'Enter' &&
-                  navigate(`/questions/${q.questionHash}`)
-                }
-              >
-                <div
-                  className={styles.card__avatar}
-                  style={{ backgroundColor: avatarBg }}
-                  aria-hidden='true'
+          <>
+            <ul className={styles.list}>
+              {questions.slice(0, visibleCount).map(q => (
+                <li
+                  key={q.questionHash || q.id}
+                  className={styles.card}
+                  onClick={() => navigate(`/questions/${q.questionHash}`)}
+                  role='button'
+                  tabIndex={0}
+                  onKeyDown={e =>
+                    e.key === 'Enter' &&
+                    navigate(`/questions/${q.questionHash}`)
+                  }
                 >
-                  {initials}
-                </div>
-                <div className={styles.card__body}>
-                  <div className={styles.card__topRow}>
-                    <h3 className={styles.card__title}>{q.title}</h3>
-                    <span className={styles.card__badge}>YOURS</span>
+                  <div
+                    className={styles.card__avatar}
+                    style={{ backgroundColor: avatarBg }}
+                    aria-hidden='true'
+                  >
+                    {initials}
                   </div>
-                  {q.content && (
-                    <p className={styles.card__excerpt}>
-                      {q.content.length > 150
-                        ? `${q.content.slice(0, 150)}…`
-                        : q.content}
-                    </p>
-                  )}
-                  <div className={styles.card__meta}>
-                    <span>
-                      {q.answerCount ?? 0}{' '}
-                      {(q.answerCount ?? 0) === 1 ? 'reply' : 'replies'}
-                    </span>
-                    {q.createdAt && (
-                      <span>{formatRelativeTime(q.createdAt)} by You</span>
+                  <div className={styles.card__body}>
+                    <div className={styles.card__topRow}>
+                      <h3 className={styles.card__title}>{q.title}</h3>
+                      <span className={styles.card__badge}>YOURS</span>
+                    </div>
+                    {q.content && (
+                      <p className={styles.card__excerpt}>
+                        {q.content.length > 150
+                          ? `${q.content.slice(0, 150)}…`
+                          : q.content}
+                      </p>
                     )}
+                    <div className={styles.card__meta}>
+                      <span>
+                        {q.answerCount ?? 0}{' '}
+                        {(q.answerCount ?? 0) === 1 ? 'reply' : 'replies'}
+                      </span>
+                      {q.createdAt && (
+                        <span>{formatRelativeTime(q.createdAt)} by You</span>
+                      )}
+                    </div>
                   </div>
+                </li>
+              ))}
+            </ul>
+
+            {questions.length > INITIAL_VISIBLE_COUNT && (
+              <div className={styles.footer}>
+                <span className={styles.paginationInfo}>
+                  Showing {Math.min(visibleCount, questions.length)} of{' '}
+                  {questions.length} topics
+                </span>
+                <div className={styles.actions}>
+                  {visibleCount < questions.length && (
+                    <button
+                      type='button'
+                      className={styles.seeMoreBtn}
+                      onClick={() => setVisibleCount(prev => prev + 10)}
+                      aria-label='See more questions'
+                    >
+                      <span>See more</span>
+                      <ChevronDown size={14} aria-hidden='true' />
+                    </button>
+                  )}
+                  {visibleCount > INITIAL_VISIBLE_COUNT && (
+                    <button
+                      type='button'
+                      className={styles.seeLessBtn}
+                      onClick={() => setVisibleCount(INITIAL_VISIBLE_COUNT)}
+                      aria-label='See less questions'
+                    >
+                      <span>See less</span>
+                      <ChevronUp size={14} aria-hidden='true' />
+                    </button>
+                  )}
                 </div>
-              </li>
-            ))}
-          </ul>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

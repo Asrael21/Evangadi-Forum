@@ -8,6 +8,8 @@ import {
   Sparkles,
   RefreshCw,
   XCircle,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { questionService } from '../../services/question/question.service';
@@ -75,6 +77,8 @@ function cleanPreviewText(text = '') {
  * Main community home: displays welcome hero, quick action cards,
  * live feed statistics, and discussion list with keyword & semantic search.
  */
+const INITIAL_VISIBLE_COUNT = 10;
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -83,6 +87,7 @@ export default function Dashboard() {
   const [questions, setQuestions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_COUNT);
 
   // Extract URL search parameters
   const queryParams = useMemo(
@@ -107,6 +112,7 @@ export default function Dashboard() {
     async (signal) => {
       setIsLoading(true);
       setError(null);
+      setVisibleCount(INITIAL_VISIBLE_COUNT);
 
       try {
         let result;
@@ -384,100 +390,135 @@ export default function Dashboard() {
             </div>
           </div>
         ) : (
-          <ul
-            className={styles.dashboard__list}
-            role='list'
-            aria-label='Questions List'
-          >
-            {questions.map(question => {
-              const isOwner = isAuthoredByUser(question, user);
-              const authorFirstName = question.author?.firstName || '';
-              const authorLastName = question.author?.lastName || '';
-              const fullName = `${authorFirstName} ${authorLastName}`.trim();
-              const authorInitials = getInitials(
-                authorFirstName,
-                authorLastName,
-              );
-              const authorBg = getAvatarBgColor(fullName || 'User');
-              const authorDisplay = isOwner
-                ? 'You'
-                : fullName || 'Anonymous';
-              const cleanSnippet = cleanPreviewText(question.content);
+          <>
+            <ul
+              className={styles.dashboard__list}
+              role='list'
+              aria-label='Questions List'
+            >
+              {questions.slice(0, visibleCount).map(question => {
+                const isOwner = isAuthoredByUser(question, user);
+                const authorFirstName = question.author?.firstName || '';
+                const authorLastName = question.author?.lastName || '';
+                const fullName = `${authorFirstName} ${authorLastName}`.trim();
+                const authorInitials = getInitials(
+                  authorFirstName,
+                  authorLastName,
+                );
+                const authorBg = getAvatarBgColor(fullName || 'User');
+                const authorDisplay = isOwner
+                  ? 'You'
+                  : fullName || 'Anonymous';
+                const cleanSnippet = cleanPreviewText(question.content);
 
-              return (
-                <li
-                  key={question.id || question.questionHash}
-                  className={`${styles.dashboard__item} ${
-                    isOwner ? styles['dashboard__item--isOwner'] : ''
-                  }`}
-                  onClick={() =>
-                    handleNavigateToQuestion(question.questionHash)
-                  }
-                  tabIndex={0}
-                  role='button'
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      handleNavigateToQuestion(question.questionHash);
+                return (
+                  <li
+                    key={question.id || question.questionHash}
+                    className={`${styles.dashboard__item} ${
+                      isOwner ? styles['dashboard__item--isOwner'] : ''
+                    }`}
+                    onClick={() =>
+                      handleNavigateToQuestion(question.questionHash)
                     }
-                  }}
-                  aria-label={`View question: ${question.title}`}
-                >
-                  {/* Author Avatar Initials */}
-                  <div
-                    className={styles.dashboard__avatar}
-                    style={{ backgroundColor: authorBg }}
-                    aria-hidden='true'
+                    tabIndex={0}
+                    role='button'
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleNavigateToQuestion(question.questionHash);
+                      }
+                    }}
+                    aria-label={`View question: ${question.title}`}
                   >
-                    {authorInitials}
-                  </div>
-
-                  {/* Question Content Column */}
-                  <div className={styles.dashboard__contentColumn}>
-                    <div className={styles.dashboard__itemTopRow}>
-                      <h3
-                        className={styles.dashboard__itemTitle}
-                        title={question.title}
-                      >
-                        {question.title}
-                      </h3>
-                      {isOwner && (
-                        <span className={styles.dashboard__yoursBadge}>
-                          Yours
-                        </span>
-                      )}
+                    {/* Author Avatar Initials */}
+                    <div
+                      className={styles.dashboard__avatar}
+                      style={{ backgroundColor: authorBg }}
+                      aria-hidden='true'
+                    >
+                      {authorInitials}
                     </div>
 
-                    {cleanSnippet && (
-                      <p className={styles.dashboard__itemSnippet}>
-                        {cleanSnippet}
-                      </p>
-                    )}
-
-                    <div className={styles.dashboard__itemMetaRow}>
-                      <span className={styles.dashboard__replyCount}>
-                        <MessageSquare size={13} aria-hidden='true' />
-                        <span>{question.answerCount || 0} replies</span>
-                      </span>
-
-                      <span className={styles.dashboard__authorDate}>
-                        {timeAgo(question.createdAt)} by {authorDisplay}
-                      </span>
-
-                      {question.score !== undefined && (
-                        <span className={styles.dashboard__semanticScore}>
-                          <Sparkles size={11} aria-hidden='true' />
-                          <span>
-                            {Math.round(Number(question.score) * 100)}% match
+                    {/* Question Content Column */}
+                    <div className={styles.dashboard__contentColumn}>
+                      <div className={styles.dashboard__itemTopRow}>
+                        <h3
+                          className={styles.dashboard__itemTitle}
+                          title={question.title}
+                        >
+                          {question.title}
+                        </h3>
+                        {isOwner && (
+                          <span className={styles.dashboard__yoursBadge}>
+                            Yours
                           </span>
-                        </span>
+                        )}
+                      </div>
+
+                      {cleanSnippet && (
+                        <p className={styles.dashboard__itemSnippet}>
+                          {cleanSnippet}
+                        </p>
                       )}
+
+                      <div className={styles.dashboard__itemMetaRow}>
+                        <span className={styles.dashboard__replyCount}>
+                          <MessageSquare size={13} aria-hidden='true' />
+                          <span>{question.answerCount || 0} replies</span>
+                        </span>
+
+                        <span className={styles.dashboard__authorDate}>
+                          {timeAgo(question.createdAt)} by {authorDisplay}
+                        </span>
+
+                        {question.score !== undefined && (
+                          <span className={styles.dashboard__semanticScore}>
+                            <Sparkles size={11} aria-hidden='true' />
+                            <span>
+                              {Math.round(Number(question.score) * 100)}% match
+                            </span>
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+                  </li>
+                );
+              })}
+            </ul>
+
+            {questions.length > INITIAL_VISIBLE_COUNT && (
+              <div className={styles.dashboard__feedFooter}>
+                <span className={styles.dashboard__paginationInfo}>
+                  Showing {Math.min(visibleCount, questions.length)} of{' '}
+                  {questions.length} questions
+                </span>
+                <div className={styles.dashboard__feedActions}>
+                  {visibleCount < questions.length && (
+                    <button
+                      type='button'
+                      className={styles.dashboard__seeMoreButton}
+                      onClick={() => setVisibleCount(prev => prev + 10)}
+                      aria-label='See more questions'
+                    >
+                      <span>See more</span>
+                      <ChevronDown size={15} aria-hidden='true' />
+                    </button>
+                  )}
+                  {visibleCount > INITIAL_VISIBLE_COUNT && (
+                    <button
+                      type='button'
+                      className={styles.dashboard__seeLessButton}
+                      onClick={() => setVisibleCount(INITIAL_VISIBLE_COUNT)}
+                      aria-label='See less questions'
+                    >
+                      <span>See less</span>
+                      <ChevronUp size={15} aria-hidden='true' />
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </section>
     </div>

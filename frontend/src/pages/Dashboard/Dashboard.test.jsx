@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Dashboard from './Dashboard';
 import { useAuth } from '../../contexts/AuthContext';
@@ -167,5 +167,86 @@ describe('Dashboard Component (Task T-14)', () => {
       expect(screen.getByText('AI Search Results')).toBeInTheDocument();
       expect(screen.getByText('92% match')).toBeInTheDocument();
     });
+  });
+
+  it('renders "See more" when listed questions are above 10 and expands on click', async () => {
+    // Generate 12 mock questions
+    const twelveQuestions = Array.from({ length: 12 }, (_, index) => ({
+      id: index + 1,
+      questionHash: `hash-${index + 1}`,
+      title: `Question Title Number ${index + 1}`,
+      content: `Question body content description for question ${index + 1}`,
+      answerCount: index,
+      createdAt: new Date().toISOString(),
+      author: { id: index + 1, firstName: `User${index + 1}`, lastName: 'Test' },
+    }));
+
+    questionService.getQuestions.mockResolvedValueOnce({
+      data: twelveQuestions,
+      meta: { total: 12 },
+    });
+
+    renderDashboard();
+
+    // Verify first 10 questions are rendered
+    await waitFor(() => {
+      expect(screen.getByText('Question Title Number 1')).toBeInTheDocument();
+    });
+    expect(screen.getByText('Question Title Number 10')).toBeInTheDocument();
+    // 11th and 12th should not be in the document yet
+    expect(screen.queryByText('Question Title Number 11')).not.toBeInTheDocument();
+    expect(screen.queryByText('Question Title Number 12')).not.toBeInTheDocument();
+
+    // Verify "See more" button and status text are present
+    expect(screen.getByText('Showing 10 of 12 questions')).toBeInTheDocument();
+    const seeMoreButton = screen.getByRole('button', { name: /see more/i });
+    expect(seeMoreButton).toBeInTheDocument();
+
+    // Click "See more"
+    fireEvent.click(seeMoreButton);
+
+    // Now all 12 questions are displayed
+    expect(screen.getByText('Question Title Number 11')).toBeInTheDocument();
+    expect(screen.getByText('Question Title Number 12')).toBeInTheDocument();
+    expect(screen.getByText('Showing 12 of 12 questions')).toBeInTheDocument();
+
+    // "See more" is now gone, and "See less" is visible
+    expect(screen.queryByRole('button', { name: /see more/i })).not.toBeInTheDocument();
+    const seeLessButton = screen.getByRole('button', { name: /see less/i });
+    expect(seeLessButton).toBeInTheDocument();
+
+    // Click "See less"
+    fireEvent.click(seeLessButton);
+
+    // Collapses back to 10
+    expect(screen.getByText('Question Title Number 10')).toBeInTheDocument();
+    expect(screen.queryByText('Question Title Number 11')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /see more/i })).toBeInTheDocument();
+  });
+
+  it('does not render "See more" when listed questions are 10 or fewer', async () => {
+    const eightQuestions = Array.from({ length: 8 }, (_, index) => ({
+      id: index + 1,
+      questionHash: `hash-${index + 1}`,
+      title: `Eight Question ${index + 1}`,
+      content: `Question body content ${index + 1}`,
+      answerCount: 0,
+      createdAt: new Date().toISOString(),
+      author: { id: index + 1, firstName: 'User', lastName: 'Test' },
+    }));
+
+    questionService.getQuestions.mockResolvedValueOnce({
+      data: eightQuestions,
+      meta: { total: 8 },
+    });
+
+    renderDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByText('Eight Question 1')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByRole('button', { name: /see more/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/showing/i)).not.toBeInTheDocument();
   });
 });
