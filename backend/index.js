@@ -14,7 +14,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const port = process.env.PORT || 3777;
+const port = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
@@ -70,22 +70,21 @@ app.use(errorHandler);
 
 // Start server
 const startServer = async () => {
+  // Start listening immediately so health checks and reverse proxy (Traefik/Coolify) succeed
+  app.listen(port, '0.0.0.0', () => {
+    console.log(`Server running on port ${port} (http://0.0.0.0:${port})`);
+  });
+
   try {
     // Test database connection
     const connection = await db.getConnection();
-
-    console.log('Database connection established successfully.');
+    console.log('✅ Database connection established successfully.');
     connection.release();
-
-    app.listen(port, '0.0.0.0', () => {
-      console.log(`Server running on port ${port} (http://0.0.0.0:${port})`);
-    });
   } catch (error) {
     console.error(
-      'Failed to connect to the database. Server not started.',
+      '❌ Database connection failed. Please check your DB credentials in DockHosting:',
       error.message,
     );
-    process.exit(1);
   }
 };
 

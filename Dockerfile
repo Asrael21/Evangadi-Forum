@@ -16,7 +16,7 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
-ENV PORT=3777
+ENV PORT=3000
 
 # Copy backend dependencies and install production modules
 COPY backend/package*.json ./backend/
@@ -28,7 +28,8 @@ COPY backend/ ./backend/
 # Copy compiled frontend assets from Stage 1
 COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
 
-# Expose backend port
+# Expose backend ports (Coolify default 3000 and legacy 3777)
+EXPOSE 3000
 EXPOSE 3777
 
 # Start the full-stack server
