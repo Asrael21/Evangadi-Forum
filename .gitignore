@@ -1,4 +1,12 @@
 node_modules/
 .env
+.env.*
+*.local
+dist/
+frontend/dist/
+backend/uploads/
+uploads/
+*.log
+.DS_Store
 AI_Powered_Forum_Evangadi_Presentation.pptx
 generate_presentation.py

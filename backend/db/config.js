@@ -1,14 +1,21 @@
-import dotenv from 'dotenv';
-dotenv.config();
+import '../env.js';
 import mysql from 'mysql2/promise';
 
-// Database connection pool
-export const db = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || '',
-  password: process.env.DB_PASS || '',
-  database: process.env.DB_NAME || '',
-});
+const dbUrl = process.env.MYSQL_URL || process.env.DATABASE_URL;
+
+// Database connection pool supporting Railway MySQL and local configs
+export const db = dbUrl
+  ? mysql.createPool(dbUrl)
+  : mysql.createPool({
+      host: process.env.DB_HOST || process.env.MYSQLHOST || 'localhost',
+      user: process.env.DB_USER || process.env.MYSQLUSER || '',
+      password: process.env.DB_PASS || process.env.MYSQLPASSWORD || '',
+      database: process.env.DB_NAME || process.env.MYSQLDATABASE || '',
+      port: Number(process.env.DB_PORT || process.env.MYSQLPORT || 3306),
+      waitForConnections: true,
+      connectionLimit: 10,
+      queueLimit: 0,
+    });
 
 const ensureParams = params => {
   if (params === undefined || params === null) {

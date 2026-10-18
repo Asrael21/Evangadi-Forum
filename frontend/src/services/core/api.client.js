@@ -3,8 +3,17 @@ import axios from 'axios';
 /**
  * Configured axios instance for API communication.
  */
+const resolveBaseURL = () => {
+  if (import.meta.env.VITE_API_BASE_URL !== undefined && import.meta.env.VITE_API_BASE_URL !== '') {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+  // When running on Railway (same origin), relative URL is used in production.
+  // In local development, fall back to default backend port.
+  return import.meta.env.PROD ? '' : 'http://localhost:3777';
+};
+
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3777',
+  baseURL: resolveBaseURL(),
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
