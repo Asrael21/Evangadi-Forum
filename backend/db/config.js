@@ -3,15 +3,25 @@ import mysql from 'mysql2/promise';
 
 const dbUrl = process.env.MYSQL_URL || process.env.DATABASE_URL;
 
-// Database connection pool supporting Railway MySQL and local configs
+const sslConfig =
+  process.env.DB_SSL === 'true' || process.env.MYSQL_SSL === 'true'
+    ? { rejectUnauthorized: false }
+    : undefined;
+
+// Database connection pool supporting cloud MySQL (Render, Aiven, TiDB, etc.) and local configs
 export const db = dbUrl
-  ? mysql.createPool(dbUrl)
+  ? mysql.createPool(
+      sslConfig && !dbUrl.includes('ssl=')
+        ? (dbUrl.includes('?') ? `${dbUrl}&ssl={"rejectUnauthorized":false}` : `${dbUrl}?ssl={"rejectUnauthorized":false}`)
+        : dbUrl,
+    )
   : mysql.createPool({
       host: process.env.DB_HOST || process.env.MYSQLHOST || 'localhost',
       user: process.env.DB_USER || process.env.MYSQLUSER || '',
       password: process.env.DB_PASS || process.env.MYSQLPASSWORD || '',
       database: process.env.DB_NAME || process.env.MYSQLDATABASE || '',
       port: Number(process.env.DB_PORT || process.env.MYSQLPORT || 3306),
+      ssl: sslConfig,
       waitForConnections: true,
       connectionLimit: 10,
       queueLimit: 0,

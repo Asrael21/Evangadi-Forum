@@ -22,9 +22,14 @@ async function initDatabase() {
 
   let connection;
   try {
+    const sslRequired = process.env.DB_SSL === 'true' || process.env.MYSQL_SSL === 'true';
+
     if (dbUrl) {
       const url = new URL(dbUrl);
       url.searchParams.set('multipleStatements', 'true');
+      if (sslRequired && !url.searchParams.has('ssl')) {
+        url.searchParams.set('ssl', '{"rejectUnauthorized":false}');
+      }
       console.log(`Connecting via URL to database...`);
       connection = await mysql.createConnection(url.toString());
     } else {
@@ -34,6 +39,7 @@ async function initDatabase() {
         password: process.env.DB_PASS || process.env.MYSQLPASSWORD || '',
         database: process.env.DB_NAME || process.env.MYSQLDATABASE || '',
         port: Number(process.env.DB_PORT || process.env.MYSQLPORT || 3306),
+        ssl: sslRequired ? { rejectUnauthorized: false } : undefined,
         multipleStatements: true,
       };
       console.log(`Connecting to MySQL at ${config.host}:${config.port}, DB: ${config.database}...`);
