@@ -51,7 +51,7 @@ app.get('/health', (req, res) => {
 app.use('/api', mainRouter);
 
 // Catch unhandled API routes so they return JSON 404 instead of HTML
-app.all('/api/*', (req, res) => {
+app.use('/api', (req, res) => {
   res.status(404).json({ success: false, message: 'API route not found' });
 });
 
@@ -60,9 +60,12 @@ const frontendDist = path.resolve(__dirname, '../frontend/dist');
 if (fs.existsSync(frontendDist)) {
   app.use(express.static(frontendDist));
 
-  // SPA fallback for all frontend client-side routes (e.g. /questions, /login, /ask)
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(frontendDist, 'index.html'));
+  // SPA fallback: send index.html for all GET client-side page routes
+  app.use((req, res, next) => {
+    if (req.method === 'GET' && !req.path.startsWith('/api') && req.path !== '/health') {
+      return res.sendFile(path.join(frontendDist, 'index.html'));
+    }
+    next();
   });
 }
 
